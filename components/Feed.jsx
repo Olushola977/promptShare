@@ -32,8 +32,8 @@ const Feed = () => {
 
     const savedSearchText = JSON.parse(localStorage.getItem('searchText'))
 
-    if (savedSearchText.query) {
-      setSearchText(savedSearchText.query)
+    if (savedSearchText?.query) {
+      setSearchText(savedSearchText?.query)
       url = `/api/prompt/search/${savedSearchText.query}`
       fetchPosts(url)
     } else {
