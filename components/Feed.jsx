@@ -1,37 +1,63 @@
-'use client'
+'use client';
 
-import {useState, useEffect} from 'react'
-import PromptCard from './PromptCard'
+import { useState, useEffect } from 'react';
+import PromptCard from './PromptCard';
 
 const Feed = () => {
-  const [searchText, setSearchText] = useState('')
-  const [posts, setPosts] = useState([])
+  const [searchText, setSearchText] = useState('');
+  const [msg, setMsg] = useState(null)
+  const [posts, setPosts] = useState([]);
+
   const handleSearchChange = (e) => {
-
-  }
-
-  const PromptCardList = ({data, handleTagCLick}) => {
-    return (
-      <div className='mt-16 prompt_layout'>
-          {data && data.map((post) => (
-            <PromptCard
-              key={post?._id}
-              post={post}
-              handleTagCLick={handleTagCLick}
-            />
-          ))}
-      </div>
-    )
-  }
+    setSearchText(e.target.value);
+    localStorage.setItem('searchText', JSON.stringify({ query: e.target.value }))
+  };
 
   useEffect(() => {
-    const fetchPosts = async () => {
-      const response = await fetch('/api/prompt');
-      const data = await response.json();
-      setPosts(data)
+    let url;
+
+    const fetchPosts = async (url) => {
+      const response = await fetch(url)
+
+      if (response.status === 200) {
+        const data = await response.json();
+        setPosts(data);
+      } else {
+        setPosts([])
+        const message = await response.json()
+        setMsg(message)
+      }
+
+    };
+
+    const savedSearchText = JSON.parse(localStorage.getItem('searchText'))
+
+    if (savedSearchText.query) {
+      setSearchText(savedSearchText.query)
+      url = `/api/prompt/search/${savedSearchText.query}`
+      fetchPosts(url)
+    } else {
+      fetchPosts('/api/prompt')
     }
-    fetchPosts()
-  }, [])
+
+  }, [searchText]);
+
+  const PromptCardList = ({ data, handleTagClick }) => {
+    return (
+      <div className='mt-16 prompt_layout'>
+        {data.length === 0 && (
+          <h2 className='text-gray-500 text-2xl'> {msg?.msg} </h2>
+        )}
+        {data && data.map((post) => (
+          <PromptCard
+            key={post?._id}
+            post={post}
+            handleTagClick={handleTagClick}
+          />
+        ))}
+      </div>
+    );
+  };
 
   return (
     <section className='feed'>
@@ -40,14 +66,14 @@ const Feed = () => {
           type="text"
           placeholder='Search for a user or tag'
           value={searchText}
-          onChange={(e) => handleSearchChange(e)}
+          onChange={handleSearchChange}
           required
           className='search_input peer'
         />
       </form>
-      <PromptCardList data={posts} handleTagCLick={() => {}} />
+      <PromptCardList data={posts} handleTagClick={() => { }} />
     </section>
-  )
-}
+  );
+};
 
-export default Feed
+export default Feed;
